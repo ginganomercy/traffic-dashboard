@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo-container">
+            <img src="{{ url_for('static', filename='dishub_logo.png') }}" alt="Logo">
+            <h2>DISHUB Kab. Tegal</h2>
+        </div>
+        <a href="{{ url_for('home') }}">Home</a>
+        <a href="{{ url_for('perhitungan') }}">Perhitungan</a>
+        <a href="{{ url_for('hasil') }}">Hasil Perhitungan</a>
+    </div>
+    <div class="content">
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

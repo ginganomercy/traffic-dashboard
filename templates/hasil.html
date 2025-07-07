@@ -1,0 +1,68 @@
+{% extends "layout.html" %} {% block content %}
+<h1>Hasil Perhitungan</h1>
+<p>Tanggal dan Waktu: {{ waktu }}</p>
+
+{% if counts %}
+<table border="1" cellpadding="10">
+  <tr>
+    <th>Vehicle Type</th>
+    <th>Count</th>
+  </tr>
+  {% for kendaraan, jumlah in counts.items() %}
+  <tr>
+    <td>{{ kendaraan }}</td>
+    <td>{{ jumlah }}</td>
+  </tr>
+  {% endfor %}
+</table>
+
+<br />
+<a href="{{ url_for('download_excel', filename=excel_filename) }}"
+  >Download Excel</a
+>
+
+<!-- Grafik -->
+<h2>Grafik Jumlah Kendaraan</h2>
+<canvas id="vehicleChart" width="600" height="300"></canvas>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  // Ambil data dari Jinja ke variabel JS
+  const labels = {{ counts.keys() | list | tojson }};
+  const dataValues = {{ counts.values() | list | tojson }};
+
+  const ctx = document.getElementById("vehicleChart").getContext("2d");
+  const vehicleChart = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: labels,
+      datasets: [{
+        label: "Jumlah Kendaraan",
+        data: dataValues,
+        backgroundColor: [
+          "#4e73df",
+          "#1cc88a",
+          "#36b9cc",
+          "#f6c23e"
+        ],
+        borderColor: "#ddd",
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            precision: 0
+          }
+        }
+      }
+    }
+  });
+</script>
+
+{% else %}
+<p>Belum ada hasil tersedia.</p>
+{% endif %} {% endblock %}

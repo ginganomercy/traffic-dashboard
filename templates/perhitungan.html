@@ -1,0 +1,67 @@
+{% extends "layout.html" %} {% block content %}
+<h1>Perhitungan Kendaraan</h1>
+<form
+  action="{{ url_for('upload_video') }}"
+  method="POST"
+  enctype="multipart/form-data"
+>
+  <input type="file" name="video" accept="video/*" required />
+  <button type="submit">Upload Video</button>
+</form>
+
+{% if video_path %}
+<h3>Video:</h3>
+<video width="640" height="360" controls>
+  <source src="{{ url_for('static', filename=video_path) }}" type="video/mp4" />
+  Browser tidak mendukung video tag.
+</video>
+<br /><br />
+<button onclick="startCounting(event)">Hitung</button>
+<!-- <button onclick="alert('Penghitungan dihentikan')">Stop</button> -->
+<div id="video-wrapper" style="display: none; margin-top: 20px">
+  <h3>Hasil Deteksi:</h3>
+  <video width="640" height="360" controls>
+    <source id="processedVideo" type="video/mp4" />
+  </video>
+</div>
+
+<script>
+  function startCounting(event) {
+    const btn = event.target;
+    btn.innerText = "Memproses...";
+    btn.disabled = true;
+
+    console.log("Video path:", "{{ video_path }}"); // debug
+
+    fetch("/process-video", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ video_path: "{{ video_path }}" }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        btn.innerText = "Hitung";
+        btn.disabled = false;
+        console.log(data); // debug
+
+        if (data.processed_video) {
+          const videoWrapper = document.getElementById("video-wrapper");
+          const videoEl = videoWrapper.querySelector("video");
+
+          // Buat ulang elemen <source> (cara paling bersih)
+          videoEl.innerHTML = `
+    <source src="/static/${
+      data.processed_video
+    }?t=${Date.now()}" type="video/mp4" />
+  `;
+
+          videoEl.load(); // wajib untuk reload video
+          videoWrapper.style.display = "block";
+        } else {
+          alert("Gagal proses video.");
+        }
+      });
+  }
+</script>
+
+{% endif %} {% endblock %}
