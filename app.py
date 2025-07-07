@@ -7,12 +7,16 @@ from counter import process_and_save_video
 
 app = Flask(__name__)
 app.secret_key = 'secret-key'
+
 UPLOAD_FOLDER = 'static/uploads'
 PROCESSED_FOLDER = 'static/processed'
 
+# Buat folder yang diperlukan
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(PROCESSED_FOLDER, exist_ok=True)
+
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['PROCESSED_FOLDER'] = PROCESSED_FOLDER
 
 @app.route("/")
 def home():
