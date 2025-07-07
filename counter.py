@@ -24,7 +24,10 @@ def process_and_save_video(input_path, output_path):
         print("[WARNING] FPS tidak valid, menggunakan default 25")
         fps = 25
 
-    fourcc = cv2.VideoWriter_fourcc(*'avc1')
+    # Pastikan folder output ada
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # ganti codec agar aman di Docker
     out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
     if not out.isOpened():
         raise RuntimeError(f"[ERROR] Gagal menyimpan video ke: {output_path}")
@@ -92,12 +95,12 @@ def process_and_save_video(input_path, output_path):
     if not os.path.exists(output_path):
         raise RuntimeError(f"[ERROR] File hasil tidak ditemukan: {output_path}")
 
-    # Simpan hasil count
+    # Simpan hasil count ke Excel
     counts = {label: len(ids) for label, ids in counted_ids.items()}
     df = pd.DataFrame(list(counts.items()), columns=["Vehicle", "Count"])
 
-    os.makedirs(os.path.dirname("static/processed/"), exist_ok=True)
     excel_path = os.path.join("static", "processed", "hasil_perhitungan.xlsx")
+    os.makedirs(os.path.dirname(excel_path), exist_ok=True)
     df.to_excel(excel_path, index=False)
 
     print(f"[INFO] Proses selesai. Kendaraan unik terdeteksi: {counts}")
