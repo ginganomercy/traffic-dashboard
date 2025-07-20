@@ -26,45 +26,45 @@
 </div>
 
 <script>
-  function startCounting(event) {
-    const btn = event.target;
-    btn.innerText = "Memproses...";
-    btn.disabled = true;
+function startCounting(event) {
+  const btn = event.target;
+  btn.innerText = "Memproses...";
+  btn.disabled = true;
 
-    fetch("/process-video", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ video_path: {{ video_path | tojson }} }),
+  fetch("/process-video", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ video_path: {{ video_path | tojson }} }),
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      btn.innerText = "Hitung";
+      btn.disabled = false;
+
+      if (data.processed_video) {
+        const videoWrapper = document.getElementById("video-wrapper");
+        const videoEl = videoWrapper.querySelector("video");
+        const sourceEl = videoEl.querySelector("source");
+
+        // ✅ Set path lengkap & timestamp
+        sourceEl.src = "/static/" + data.processed_video + "?t=" + new Date().getTime();
+
+        // ✅ Delay load agar browser siap render
+        setTimeout(() => {
+          videoEl.load();
+          videoWrapper.style.display = "block";
+        }, 500);
+      } else {
+        alert("Gagal proses video.");
+      }
     })
-      .then((res) => res.json())
-      .then((data) => {
-        btn.innerText = "Hitung";
-        btn.disabled = false;
-
-        if (data.processed_video) {
-          const videoWrapper = document.getElementById("video-wrapper");
-          const videoEl = videoWrapper.querySelector("video");
-          const sourceEl = videoEl.querySelector("source");
-
-          // Set ulang source video hasil proses
-          sourceEl.src = "/video/" + data.processed_video + "?t=" + Date.now();
-
-          // ✅ Tambahkan delay sebelum load agar file siap
-          setTimeout(() => {
-            videoEl.load(); // Wajib reload agar video baru muncul
-            videoWrapper.style.display = "block"; // Tampilkan video
-          }, 1000); // Delay 1 detik
-        } else {
-          alert("Gagal proses video.");
-        }
-      })
-      .catch((err) => {
-        console.error("Error:", err);
-        alert("Terjadi kesalahan saat memproses video.");
-        btn.innerText = "Hitung";
-        btn.disabled = false;
-      });
-  }
+    .catch((err) => {
+      console.error("Error:", err);
+      alert("Terjadi kesalahan saat memproses video.");
+      btn.innerText = "Hitung";
+      btn.disabled = false;
+    });
+}
 </script>
 
 {% endif %} {% endblock %}
