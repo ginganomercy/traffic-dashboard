@@ -96,6 +96,8 @@ def process_and_save_video(input_path, output_path):
     cap.release()
     out.release()
 
+    print("[DEBUG] Size of video:", os.path.getsize(output_path))
+
     # Cek apakah file benar-benar ditulis
     if not os.path.exists(output_path) or os.path.getsize(output_path) == 0:
         raise RuntimeError(f"[ERROR] File hasil tidak valid atau kosong: {output_path}")
