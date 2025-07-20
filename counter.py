@@ -4,15 +4,14 @@ import cv2
 import os
 import pandas as pd
 
-model = YOLO("yolov8n.pt")  # Ganti sesuai model yang kamu gunakan
-tracker = DeepSort(max_age=30)  # Parameter bisa disesuaikan
+model = YOLO("yolov8n.pt")  # Gunakan model yang ringan untuk performa cepat
+tracker = DeepSort(max_age=30)
 
 def process_and_save_video(input_path, output_path):
     vehicle_labels = ['car', 'motorcycle', 'truck', 'bus']
     counted_ids = {label: set() for label in vehicle_labels}
     track_positions = {}
 
-    # Load video input
     cap = cv2.VideoCapture(input_path)
     if not cap.isOpened():
         raise RuntimeError(f"[ERROR] Gagal membuka video: {input_path}")
@@ -20,21 +19,19 @@ def process_and_save_video(input_path, output_path):
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fps = cap.get(cv2.CAP_PROP_FPS)
-
     if fps <= 0 or fps is None:
-        print("[WARNING] FPS tidak valid, menggunakan default 25")
+        print("[WARNING] FPS tidak valid, fallback ke 25")
         fps = 25
 
-    # Pastikan folder output ada
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
-    # Gunakan codec aman untuk Linux dan browser
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')  
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
     if not out.isOpened():
-        raise RuntimeError(f"[ERROR] Gagal membuka VideoWriter untuk {output_path}")
+        raise RuntimeError(f"[ERROR] Tidak bisa membuka VideoWriter ke: {output_path}")
 
-    print(f"[INFO] Proses dimulai. Output akan disimpan ke: {output_path}")
+    print(f"[INFO] Mulai proses video: {input_path}")
+    print(f"[INFO] Output akan disimpan ke: {output_path}")
 
     count_line_y = int(height * 0.6)
 
@@ -67,8 +64,6 @@ def process_and_save_video(input_path, output_path):
 
             if label in vehicle_labels:
                 center_y = int((y1 + y2) / 2)
-
-                # Cek crossing line
                 if track_id not in track_positions:
                     track_positions[track_id] = center_y
                 else:
@@ -78,15 +73,15 @@ def process_and_save_video(input_path, output_path):
                             counted_ids[label].add(track_id)
                     track_positions[track_id] = center_y
 
-                # Gambar bounding box dan label
+                # Gambar bounding box
                 cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
                 cv2.putText(frame, f"{label} #{track_id}", (x1, y1 - 10),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
 
-        # Gambar garis hitung
+        # Gambar garis crossing
         cv2.line(frame, (0, count_line_y), (width, count_line_y), (255, 0, 0), 2)
 
-        # Tampilkan count realtime
+        # Info jumlah kendaraan realtime
         for i, (label, ids) in enumerate(counted_ids.items()):
             cv2.putText(frame, f"{label}: {len(ids)}", (10, 30 + i * 25),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
@@ -96,13 +91,13 @@ def process_and_save_video(input_path, output_path):
     cap.release()
     out.release()
 
-    print("[DEBUG] Size of video:", os.path.getsize(output_path))
+    # Cek ukuran file hasil
+    print("[DEBUG] Ukuran video hasil:", os.path.getsize(output_path))
 
-    # Cek apakah file benar-benar ditulis
     if not os.path.exists(output_path) or os.path.getsize(output_path) == 0:
         raise RuntimeError(f"[ERROR] File hasil tidak valid atau kosong: {output_path}")
 
-    # Simpan hasil count ke Excel
+    # Simpan hasil perhitungan ke Excel
     counts = {label: len(ids) for label, ids in counted_ids.items()}
     df = pd.DataFrame(list(counts.items()), columns=["Vehicle", "Count"])
 
@@ -110,8 +105,8 @@ def process_and_save_video(input_path, output_path):
     os.makedirs(os.path.dirname(excel_path), exist_ok=True)
     df.to_excel(excel_path, index=False)
 
-    print(f"[INFO] Proses selesai. Kendaraan unik terdeteksi: {counts}")
-    print(f"[INFO] Video output: {output_path}")
-    print(f"[INFO] Data disimpan ke: {excel_path}")
+    print(f"[INFO] Selesai. Jumlah kendaraan: {counts}")
+    print(f"[INFO] Video disimpan di: {output_path}")
+    print(f"[INFO] Excel disimpan di: {excel_path}")
 
     return os.path.basename(output_path), os.path.basename(excel_path), counts
