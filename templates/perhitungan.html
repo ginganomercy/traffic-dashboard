@@ -31,35 +31,34 @@
     btn.innerText = "Memproses...";
     btn.disabled = true;
 
-    console.log("Video path:", "{{ video_path }}"); // debug
-
     fetch("/process-video", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ video_path: "{{ video_path }}" }),
+      body: JSON.stringify({ video_path: {{ video_path | tojson }} }),
     })
       .then((res) => res.json())
       .then((data) => {
         btn.innerText = "Hitung";
         btn.disabled = false;
-        console.log(data); // debug
 
         if (data.processed_video) {
           const videoWrapper = document.getElementById("video-wrapper");
           const videoEl = videoWrapper.querySelector("video");
+          const sourceEl = videoEl.querySelector("source");
 
-          // Buat ulang elemen <source> (cara paling bersih)
-          videoEl.innerHTML = `
-    <source src="/static/${
-      data.processed_video
-    }?t=${Date.now()}" type="video/mp4" />
-  `;
-
-          videoEl.load(); // wajib untuk reload video
+          // Set ulang source dan tampilkan video
+          sourceEl.src = "/static/" + data.processed_video + "?t=" + Date.now();
+          videoEl.load();
           videoWrapper.style.display = "block";
         } else {
           alert("Gagal proses video.");
         }
+      })
+      .catch((err) => {
+        console.error("Error:", err);
+        alert("Terjadi kesalahan saat memproses video.");
+        btn.innerText = "Hitung";
+        btn.disabled = false;
       });
   }
 </script>
