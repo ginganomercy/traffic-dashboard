@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, request, redirect, url_for, send_file,session
+from flask import Flask, render_template, request, redirect, url_for, send_file, session
 from datetime import datetime
 import uuid
 
@@ -24,40 +24,7 @@ def home():
 
 @app.route("/perhitungan", methods=["GET", "POST"])
 def perhitungan():
-    video_path = None
-    return render_template("perhitungan.html", title="Perhitungan", video_path=video_path)
-
-    
-@app.route("/process-video", methods=["POST"])
-def process_video():
-    try:
-        data = request.get_json()
-
-        input_path = os.path.join("static", data["video_path"])
-        output_path = os.path.join("static", "processed", f"processed_{os.path.basename(input_path)}")
-        output_path = os.path.splitext(output_path)[0] + ".mp4"
-
-
-        os.makedirs("static/processed", exist_ok=True)
-
-        # Jalankan proses
-        processed_filename, excel_filename, counts = process_and_save_video(input_path, output_path)
-
-        # Simpan hasil ke session untuk halaman /hasil
-        session["hasil_counts"] = counts
-        session["excel_filename"] = excel_filename
-
-        print("[INFO] Video & Excel berhasil diproses")
-        print("[INFO] processed_filename:", processed_filename)
-        print("[INFO] counts:", counts)
-
-        return {
-            "processed_video": f"processed/{processed_filename}"
-        }
-
-    except Exception as e:
-        print("[ERROR]", str(e))
-        return {"error": str(e)}, 500
+    return render_template("perhitungan.html", title="Perhitungan", video_path=None)
 
 @app.route("/upload", methods=["POST"])
 def upload_video():
@@ -75,13 +42,50 @@ def upload_video():
 
     return render_template("perhitungan.html", title="Perhitungan", video_path=f"uploads/{unique_name}")
 
+@app.route("/process-video", methods=["POST"])
+def process_video():
+    try:
+        data = request.get_json()
+
+        input_path = os.path.join("static", data["video_path"])
+        output_path = os.path.join(PROCESSED_FOLDER, f"processed_{os.path.basename(input_path)}")
+        output_path = os.path.splitext(output_path)[0] + ".mp4"
+
+        os.makedirs(PROCESSED_FOLDER, exist_ok=True)
+
+        # Jalankan proses
+        processed_filename, excel_filename, counts = process_and_save_video(input_path, output_path)
+
+        # Simpan hasil ke session untuk halaman /hasil
+        session["hasil_counts"] = counts
+        session["excel_filename"] = excel_filename
+
+        print("[INFO] Video & Excel berhasil diproses")
+        print("[INFO] processed_filename:", processed_filename)
+        print("[INFO] counts:", counts)
+
+        return {
+            "processed_video": processed_filename  # hanya nama file
+        }
+
+    except Exception as e:
+        print("[ERROR]", str(e))
+        return {"error": str(e)}, 500
+
+@app.route("/video/<filename>")
+def serve_video(filename):
+    # Sajikan video hasil proses melalui route ini
+    path = os.path.join(PROCESSED_FOLDER, filename)
+    if os.path.exists(path):
+        return send_file(path, mimetype='video/mp4')
+    return "Video tidak ditemukan", 404
+
 @app.route("/hasil")
 def hasil():
     waktu = datetime.now().strftime("%A, %d %B %Y %H:%M:%S")
     counts = session.get("hasil_counts", {})
     excel_filename = session.get("excel_filename", None)
     return render_template("hasil.html", title="Hasil Perhitungan", waktu=waktu, counts=counts, excel_filename=excel_filename)
-
 
 @app.route("/download-excel")
 def download_excel():
@@ -91,7 +95,6 @@ def download_excel():
 
     file_path = os.path.join(PROCESSED_FOLDER, filename)
     return send_file(file_path, as_attachment=True)
-
 
 if __name__ == "__main__":
     app.run(debug=True)
