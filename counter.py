@@ -27,10 +27,11 @@ def process_and_save_video(input_path, output_path):
     # Pastikan folder output ada
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # ganti codec agar aman di Docker
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Lebih aman untuk browser dan OS Linux
     out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
     if not out.isOpened():
         raise RuntimeError(f"[ERROR] Gagal menyimpan video ke: {output_path}")
+
 
     count_line_y = int(height * 0.6)
 
