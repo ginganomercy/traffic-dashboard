@@ -46,10 +46,14 @@
           const videoEl = videoWrapper.querySelector("video");
           const sourceEl = videoEl.querySelector("source");
 
-          // Set ulang source dan tampilkan video
+          // Set ulang source video hasil proses
           sourceEl.src = "/static/" + data.processed_video + "?t=" + Date.now();
-          videoEl.load();
-          videoWrapper.style.display = "block";
+
+          // ✅ Tambahkan delay sebelum load agar file siap
+          setTimeout(() => {
+            videoEl.load(); // Wajib reload agar video baru muncul
+            videoWrapper.style.display = "block"; // Tampilkan video
+          }, 1000); // Delay 1 detik
         } else {
           alert("Gagal proses video.");
         }
