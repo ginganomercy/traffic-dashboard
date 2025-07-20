@@ -40,23 +40,24 @@ def upload_video():
     video_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_name)
     video.save(video_path)
 
+    # Hanya kirim path relatif dari /static
     return render_template("perhitungan.html", title="Perhitungan", video_path=f"uploads/{unique_name}")
 
 @app.route("/process-video", methods=["POST"])
 def process_video():
     try:
         data = request.get_json()
+        input_rel_path = data["video_path"]  # ex: uploads/abc.mp4
+        input_path = os.path.join("static", input_rel_path)
 
-        input_path = os.path.join("static", data["video_path"])
-        output_path = os.path.join(PROCESSED_FOLDER, f"processed_{os.path.basename(input_path)}")
-        output_path = os.path.splitext(output_path)[0] + ".mp4"
-
-        os.makedirs(PROCESSED_FOLDER, exist_ok=True)
+        basename = os.path.splitext(os.path.basename(input_path))[0]
+        output_filename = f"processed_{basename}.mp4"
+        output_path = os.path.join(PROCESSED_FOLDER, output_filename)
 
         # Jalankan proses
         processed_filename, excel_filename, counts = process_and_save_video(input_path, output_path)
 
-        # Simpan hasil ke session untuk halaman /hasil
+        # Simpan hasil ke session
         session["hasil_counts"] = counts
         session["excel_filename"] = excel_filename
 
@@ -65,7 +66,7 @@ def process_video():
         print("[INFO] counts:", counts)
 
         return {
-            "processed_video": processed_filename  # hanya nama file
+            "processed_video": processed_filename  # hanya nama file, disajikan lewat /video/<filename>
         }
 
     except Exception as e:
