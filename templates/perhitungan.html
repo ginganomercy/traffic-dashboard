@@ -47,7 +47,7 @@
           const sourceEl = videoEl.querySelector("source");
 
           // Set ulang source video hasil proses
-          sourceEl.src = "/static/" + data.processed_video + "?t=" + Date.now();
+          sourceEl.src = "/video/" + data.processed_video + "?t=" + Date.now();
 
           // ✅ Tambahkan delay sebelum load agar file siap
           setTimeout(() => {
