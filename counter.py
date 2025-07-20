@@ -4,15 +4,15 @@ import cv2
 import os
 import pandas as pd
 
-model = YOLO("yolov8n.pt")  # ganti sesuai model kamu
-tracker = DeepSort(max_age=30)  # bisa di-tweak sesuai performa tracking
+model = YOLO("yolov8n.pt")  # Ganti sesuai model yang kamu gunakan
+tracker = DeepSort(max_age=30)  # Parameter bisa disesuaikan
 
 def process_and_save_video(input_path, output_path):
     vehicle_labels = ['car', 'motorcycle', 'truck', 'bus']
     counted_ids = {label: set() for label in vehicle_labels}
     track_positions = {}
 
-    # Load video
+    # Load video input
     cap = cv2.VideoCapture(input_path)
     if not cap.isOpened():
         raise RuntimeError(f"[ERROR] Gagal membuka video: {input_path}")
@@ -20,6 +20,7 @@ def process_and_save_video(input_path, output_path):
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fps = cap.get(cv2.CAP_PROP_FPS)
+
     if fps <= 0 or fps is None:
         print("[WARNING] FPS tidak valid, menggunakan default 25")
         fps = 25
@@ -27,11 +28,13 @@ def process_and_save_video(input_path, output_path):
     # Pastikan folder output ada
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Lebih aman untuk browser dan OS Linux
+    # Gunakan codec aman untuk Linux dan browser
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')  
     out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
     if not out.isOpened():
-        raise RuntimeError(f"[ERROR] Gagal menyimpan video ke: {output_path}")
+        raise RuntimeError(f"[ERROR] Gagal membuka VideoWriter untuk {output_path}")
 
+    print(f"[INFO] Proses dimulai. Output akan disimpan ke: {output_path}")
 
     count_line_y = int(height * 0.6)
 
@@ -65,7 +68,7 @@ def process_and_save_video(input_path, output_path):
             if label in vehicle_labels:
                 center_y = int((y1 + y2) / 2)
 
-                # Crossing line check
+                # Cek crossing line
                 if track_id not in track_positions:
                     track_positions[track_id] = center_y
                 else:
@@ -75,15 +78,15 @@ def process_and_save_video(input_path, output_path):
                             counted_ids[label].add(track_id)
                     track_positions[track_id] = center_y
 
-                # Draw box and label
+                # Gambar bounding box dan label
                 cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
                 cv2.putText(frame, f"{label} #{track_id}", (x1, y1 - 10),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
 
-        # Garis hitung
+        # Gambar garis hitung
         cv2.line(frame, (0, count_line_y), (width, count_line_y), (255, 0, 0), 2)
 
-        # Count realtime
+        # Tampilkan count realtime
         for i, (label, ids) in enumerate(counted_ids.items()):
             cv2.putText(frame, f"{label}: {len(ids)}", (10, 30 + i * 25),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
@@ -93,8 +96,9 @@ def process_and_save_video(input_path, output_path):
     cap.release()
     out.release()
 
-    if not os.path.exists(output_path):
-        raise RuntimeError(f"[ERROR] File hasil tidak ditemukan: {output_path}")
+    # Cek apakah file benar-benar ditulis
+    if not os.path.exists(output_path) or os.path.getsize(output_path) == 0:
+        raise RuntimeError(f"[ERROR] File hasil tidak valid atau kosong: {output_path}")
 
     # Simpan hasil count ke Excel
     counts = {label: len(ids) for label, ids in counted_ids.items()}
