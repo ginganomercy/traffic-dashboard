@@ -35,6 +35,8 @@ def process_video():
 
         input_path = os.path.join("static", data["video_path"])
         output_path = os.path.join("static", "processed", f"processed_{os.path.basename(input_path)}")
+        output_path = os.path.splitext(output_path)[0] + ".mp4"
+
 
         os.makedirs("static/processed", exist_ok=True)
 
